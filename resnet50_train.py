@@ -4,9 +4,7 @@ from torchvision import datasets, transforms, models
 import torch.nn as nn
 import torch.optim as optim
 
-from ray import tune
-from ray.train import RunConfig, ScalingConfig
-
+from ray.train import  CheckpointConfig,RunConfig,ScalingConfig
 def train_func(config):
     transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
     train_dataset = datasets.MNIST('/data', train=True, download=True, transform=transform)
@@ -29,19 +27,21 @@ def train_func(config):
         print(f"Epoch {epoch+1}, Loss: {running_loss/len(train_loader)}")
 
 trainer = TorchTrainer(
-    train_loop_per_worker=train_func,
+    train_func,
     scaling_config=ScalingConfig(
         num_workers=2,
         use_gpu=False
     ),
     run_config=RunConfig(
-        name="torch_benchmark"
-    )
+        checkpoint_config=CheckpointConfig(
+            checkpoint_frequency=1
+        )
+    ),
+    config={
+        "batch_size": 64,
+        "lr": 0.001,
+        "epochs": 5
+    }
 )
 
-# Start the training job with the specified config using trainer.fit
-trainer.fit(config={
-    "batch_size": 64,
-    "lr": 0.001,
-    "epochs": 5
-})
+trainer.fit()
