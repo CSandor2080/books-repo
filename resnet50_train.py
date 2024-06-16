@@ -1,3 +1,4 @@
+import ray
 import torch
 from ray.train.torch import TorchTrainer
 from torchvision import datasets, transforms, models
@@ -5,7 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 from ray.train import RunConfig, ScalingConfig
-
+ray.init(address="ray://raycluster-resnet50-benchmark-head-svc:6379")
 def train_func():
     batch_size = 64
     lr = 0.001
